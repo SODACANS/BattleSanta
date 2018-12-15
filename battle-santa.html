@@ -3,8 +3,53 @@
 <head>
     <meta charset="utf-8" />
     <title>BattleSanta</title>
+    <style>
+        body {
+            font-family: 'Teko', sans-serif;
+            font-size: 3.5rem;
+        }
+
+        #canvas {
+            border: solid 5px;
+        }
+
+        #menu {
+            position: absolute;
+            margin: 0px;
+            padding-left: 4rem;
+            padding-top: 1rem;
+            top: 613px;
+            left: 960px;
+            width: 575px;
+            height: 270px;
+            border: double 5px;
+        }
+
+        button {
+            font: inherit;
+            border: none;
+            background: none;
+        }
+        button:hover, button:focus {
+            background: rgb(105, 201, 250);
+        }
+    </style>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css?family=Teko" rel="stylesheet">
+    <script src="battle-santa.js"></script>
 </head>
 <body>
-
+    <canvas id="canvas" width="1600" height="900"></canvas>
+    <ol id="menu">
+        <li>
+            <button id="throw">Throw Snowball</button>
+        </li>
+        <li>
+            <button id="dodge">Dodge</button>
+        </li>
+        <li>
+            <button id="pack">Pack Snowball</button>
+        </li>
+    </ol>
 </body>
 </html>
