@@ -84,10 +84,17 @@ class Combatant {
     ///** Information necessary to display this combatant in the UI. */
     //displayInfo;
 
-    constructor(displayInfo) {
+    constructor(displayInfo, loadedSnowball) {
         this.displayInfo = displayInfo;
         this.nextAction = null;
-        this.isLoaded = true;
+	this.loadedSnowball = loadedSnowball;
+    }
+
+    get isLoaded() {
+	return !this.loadedSnowball.displayInfo.hidden;
+    }
+    set isLoaded(val) {
+	this.loadedSnowball.displayInfo.hidden = !val;
     }
 
     /** Indicates that the combatant has selected their next move and is ready for the next turn to resolve. */
@@ -110,14 +117,17 @@ class Combatant {
 
     draw(ctx) {
         this.displayInfo.draw(ctx);
+	this.loadedSnowball.draw(ctx);
     }
 }
 
 class Grinch extends Combatant {
 
-    constructor(grinchImg) {
+    constructor(grinchImg, snowballImg) {
         let displayInfo = new DisplayInfo(grinchImg, 1000, 0);
-        super(displayInfo);
+	let snowballDisplayInfo = new DisplayInfo(snowballImg, 1000, 525);
+	let snowball = new Snowball(snowballDisplayInfo);
+        super(displayInfo, snowball);
     }
 
     pickMove() {
@@ -129,9 +139,11 @@ class Grinch extends Combatant {
 
 class Santa extends Combatant {
 
-    constructor(santaImg) {
+    constructor(santaImg, snowballImg) {
         let displayInfo = new DisplayInfo(santaImg, 0, 300);
-        super(displayInfo);
+	let snowballDisplayInfo = new DisplayInfo(snowballImg, 525, 825);
+	let snowball = new Snowball(snowballDisplayInfo);
+        super(displayInfo, snowball);
     }
 
     pickMove(action) {
@@ -139,13 +151,14 @@ class Santa extends Combatant {
     }
 }
 
-class SnowBall {
+class Snowball {
 
-    //displayInfo;
-
-    constructor(snowballImg, x, y) {
-        let displayInfo = new DisplayInfo(snowballImg, x, y);
+    constructor(displayInfo) {
         this.displayInfo = displayInfo;
+    }
+
+    draw(ctx) {
+	this.displayInfo.draw(ctx);
     }
 }
 
@@ -155,8 +168,8 @@ class BattleSantaGame {
     //santa = new Santa();
 
     constructor(graphicsContext, grinchImg, santaImg, snowballImg) {
-        this.grinch = new Grinch(grinchImg);
-        this.santa = new Santa(santaImg);
+        this.grinch = new Grinch(grinchImg, snowballImg);
+        this.santa = new Santa(santaImg, snowballImg);
         this.ctx = graphicsContext;
     }
 
