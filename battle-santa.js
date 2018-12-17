@@ -159,6 +159,7 @@ class Grinch extends Enemy {
     pickMove() {
 	if (!this.target.isLoaded && !this.isLoaded) {
 	    this.nextAction = Action.Reload;
+	    return;
 	}
         let legalActions = this.getlegalActions();
         let pickIndex = getRandomInt(legalActions.length - 1);
@@ -177,6 +178,21 @@ class Santa extends Combatant {
 
     pickMove(action) {
         this.nextAction = action;
+	this.focusCurrentAction();
+    }
+
+    focusCurrentAction() {
+	switch (this.nextAction) {
+	    case Action.Attack:
+		document.getElementById("throw").focus();
+		break;
+	    case Action.Defend:
+		document.getElementById("dodge").focus();
+		break;
+	    case Action.Reload:
+		document.getElementById("pack").focus();
+		break;
+	}
     }
 }
 
@@ -254,6 +270,13 @@ var battleSantaGame;
 function main() {
     let ctx = document.getElementById("canvas").getContext("2d");
     battleSantaGame = new BattleSantaGame(ctx, grinchImage, santaImage, snowballImage);
+    // Set up event listeners for inputs
+    document.addEventListener('keypress', (event) => {
+	const key = event.key;
+	if (['1','2','3'].some(val => val == key)) {
+	    action(+key);
+	}
+    });
     battleSantaGame.draw();
     //ctx.drawImage(santaImage, 0, 300);
     //ctx.drawImage(grinchImage, 1000, 0);
