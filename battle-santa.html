@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -42,14 +42,15 @@
     <canvas id="canvas" width="1600" height="900"></canvas>
     <ol id="menu">
         <li>
-            <button id="throw">Throw Snowball</button>
+            <button id="throw" onclick="action(1)">Throw Snowball</button>
         </li>
         <li>
-            <button id="dodge">Dodge</button>
+            <button id="dodge" onclick="action(2)">Dodge</button>
         </li>
         <li>
-            <button id="pack">Pack Snowball</button>
+            <button id="pack" onclick="action(3)">Pack Snowball</button>
         </li>
     </ol>
+<p id=“log”></p>
 </body>
 </html>

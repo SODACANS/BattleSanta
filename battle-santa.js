@@ -84,17 +84,21 @@ class Combatant {
     ///** Information necessary to display this combatant in the UI. */
     //displayInfo;
 
-    constructor(displayInfo, loadedSnowball) {
+    constructor(displayInfo, loadedSnowball, name) {
         this.displayInfo = displayInfo;
         this.nextAction = null;
 	this.loadedSnowball = loadedSnowball;
+	this.name = name;
     }
 
     get isLoaded() {
 	return !this.loadedSnowball.displayInfo.hidden;
     }
-    set isLoaded(val) {
-	this.loadedSnowball.displayInfo.hidden = !val;
+    load() {
+	this.loadedSnowball.displayInfo.hidden = false;
+    }
+    unload() {
+	this.loadedSnowball.displayInfo.hidden = true;
     }
 
     /** Indicates that the combatant has selected their next move and is ready for the next turn to resolve. */
@@ -103,7 +107,7 @@ class Combatant {
     }
 
     getlegalActions() {
-        return this.isLoaded ? [ Action.Attack, Action.Defend, Action.Reload ]
+        return this.isLoaded ? [ Action.Attack, Action.Defend ]
             : [ Action.Defend, Action.Reload ];
     }
 
@@ -115,25 +119,50 @@ class Combatant {
         this.nextAction = null;
     }
 
+    printAction() {
+	switch (this.nextAction) {
+	    case Action.Attack:
+		console.log(this.name, "chucks a snowball. . .");
+		break;
+	    case Action.Defend:
+		console.log(this.name, "ducks out of the way. . .");
+		break;
+	    case Action.Reload:
+		console.log(this.name, "rolls a fresh snowball. . .");
+	}
+    }
+
     draw(ctx) {
         this.displayInfo.draw(ctx);
 	this.loadedSnowball.draw(ctx);
     }
 }
 
-class Grinch extends Combatant {
+class Enemy extends Combatant {
+    
+    constructor(displayInfo, loadedSnowball, name, target) {
+	super(displayInfo, loadedSnowball, name);
+	this.target = target;
+    }
 
-    constructor(grinchImg, snowballImg) {
+}
+
+class Grinch extends Enemy {
+
+    constructor(grinchImg, snowballImg, target) {
         let displayInfo = new DisplayInfo(grinchImg, 1000, 0);
 	let snowballDisplayInfo = new DisplayInfo(snowballImg, 1000, 525);
 	let snowball = new Snowball(snowballDisplayInfo);
-        super(displayInfo, snowball);
+        super(displayInfo, snowball, "The Grinch", target);
     }
 
     pickMove() {
-        legalActions = this.getlegalActions();
-        pickIndex = getRandomInt(legalActions.length - 1);
-        return legalActions[pickIndex];
+	if (!this.target.isLoaded && !this.isLoaded) {
+	    this.nextAction = Action.Reload;
+	}
+        let legalActions = this.getlegalActions();
+        let pickIndex = getRandomInt(legalActions.length - 1);
+	this.nextAction = legalActions[pickIndex];
     }
 }
 
@@ -143,7 +172,7 @@ class Santa extends Combatant {
         let displayInfo = new DisplayInfo(santaImg, 0, 300);
 	let snowballDisplayInfo = new DisplayInfo(snowballImg, 525, 825);
 	let snowball = new Snowball(snowballDisplayInfo);
-        super(displayInfo, snowball);
+        super(displayInfo, snowball, "Santa");
     }
 
     pickMove(action) {
@@ -168,21 +197,69 @@ class BattleSantaGame {
     //santa = new Santa();
 
     constructor(graphicsContext, grinchImg, santaImg, snowballImg) {
-        this.grinch = new Grinch(grinchImg, snowballImg);
         this.santa = new Santa(santaImg, snowballImg);
+        this.grinch = new Grinch(grinchImg, snowballImg, this.santa);
         this.ctx = graphicsContext;
+	this.grinch.pickMove();
+    }
+
+    resolveTurn() {
+	this.grinch.printAction();
+	this.santa.printAction();
+	if (this.grinch.nextAction == Action.Attack) {
+	    if (this.santa.nextAction != Action.Defend) {
+		console.log("You've been hit!");
+		alert("You lost");
+		this.reset();
+	    } else {
+		this.grinch.unload();
+	    }
+	}
+	else if (this.santa.nextAction == Action.Attack) {
+	    if (this.grinch.nextAction != Action.Defend) {
+		console.log("You nailed the grinch right in the face!");
+		alert("You won!");
+		this.reset();
+	    } else {
+		this.santa.unload();
+	    }
+	}
+	if (this.santa.nextAction == Action.Reload) {
+	    this.santa.load();
+	}
+	if (this.grinch.nextAction == Action.Reload) {
+	    this.grinch.load();
+	}
+	this.santa.nextAction = null;
+	this.grinch.pickMove();
+	this.draw();
+    }
+
+    reset() {
+	this.santa.load();
+	this.grinch.load();
+	this.grinch.pickMove();
+	this.draw();
     }
 
     draw() {
+	this.ctx.clearRect(0,0,1600,900);
         this.grinch.draw(this.ctx);
         this.santa.draw(this.ctx);
     }
 }
 
+var battleSantaGame;
+
 function main() {
     let ctx = document.getElementById("canvas").getContext("2d");
-    let battleSantaGame = new BattleSantaGame(ctx, grinchImage, santaImage, snowballImage);
+    battleSantaGame = new BattleSantaGame(ctx, grinchImage, santaImage, snowballImage);
     battleSantaGame.draw();
     //ctx.drawImage(santaImage, 0, 300);
     //ctx.drawImage(grinchImage, 1000, 0);
+}
+
+function action(act) {
+    battleSantaGame.santa.pickMove(act);
+    battleSantaGame.resolveTurn();
 }
