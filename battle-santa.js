@@ -119,17 +119,19 @@ class Combatant {
         this.nextAction = null;
     }
 
-    printAction() {
+    getLogMessageForAction() {
+	let message = null;
 	switch (this.nextAction) {
 	    case Action.Attack:
-		console.log(this.name, "chucks a snowball. . .");
+		message = this.isLoaded ? `${this.name} chucks a snowball. . .` : `${this.name} looks really silly trying to throw a non-existent snowball. . .`;
 		break;
 	    case Action.Defend:
-		console.log(this.name, "ducks out of the way. . .");
+		message = `${this.name} ducks out of the way. . .`;
 		break;
 	    case Action.Reload:
-		console.log(this.name, "rolls a fresh snowball. . .");
+		message = `${this.name} rolls a fresh snowball. . .`;
 	}
+	return message;
     }
 
     draw(ctx) {
@@ -212,28 +214,30 @@ class BattleSantaGame {
     //grinch = new Grinch();
     //santa = new Santa();
 
-    constructor(graphicsContext, grinchImg, santaImg, snowballImg) {
+    constructor(graphicsContext, grinchImg, santaImg, snowballImg, logRef) {
         this.santa = new Santa(santaImg, snowballImg);
         this.grinch = new Grinch(grinchImg, snowballImg, this.santa);
         this.ctx = graphicsContext;
+	this.logRef = logRef;
 	this.grinch.pickMove();
     }
 
     resolveTurn() {
-	this.grinch.printAction();
-	this.santa.printAction();
-	if (this.grinch.nextAction == Action.Attack) {
+	this.clearLog();
+	this.log(this.grinch.getLogMessageForAction());
+	this.log(this.santa.getLogMessageForAction());
+	if (this.grinch.nextAction == Action.Attack && this.grinch.isLoaded) {
 	    if (this.santa.nextAction != Action.Defend) {
-		console.log("You've been hit!");
+		this.log("You've been hit!");
 		alert("You lost");
 		this.reset();
 	    } else {
 		this.grinch.unload();
 	    }
 	}
-	else if (this.santa.nextAction == Action.Attack) {
+	else if (this.santa.nextAction == Action.Attack && this.santa.isLoaded) {
 	    if (this.grinch.nextAction != Action.Defend) {
-		console.log("You nailed the grinch right in the face!");
+		this.log("You nailed the grinch right in the face!");
 		alert("You won!");
 		this.reset();
 	    } else {
@@ -263,13 +267,23 @@ class BattleSantaGame {
         this.grinch.draw(this.ctx);
         this.santa.draw(this.ctx);
     }
+
+    log(message) {
+	console.log(message);
+	this.logRef.innerHTML += `${message}</br>`;
+    }
+
+    clearLog() {
+	this.logRef.innerHTML = "";
+    }
 }
 
 var battleSantaGame;
 
 function main() {
     let ctx = document.getElementById("canvas").getContext("2d");
-    battleSantaGame = new BattleSantaGame(ctx, grinchImage, santaImage, snowballImage);
+    let log = document.getElementById("log");
+    battleSantaGame = new BattleSantaGame(ctx, grinchImage, santaImage, snowballImage, log);
     // Set up event listeners for inputs
     document.addEventListener('keypress', (event) => {
 	const key = event.key;

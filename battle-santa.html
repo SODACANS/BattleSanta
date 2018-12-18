@@ -33,6 +33,11 @@
         button:hover, button:focus {
             background: rgb(105, 201, 250);
         }
+	#log {
+	    position: absolute;
+	    top: 0px;
+	    left: 50px;
+	}
     </style>
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css?family=Teko" rel="stylesheet">
@@ -40,6 +45,7 @@
 </head>
 <body>
     <canvas id="canvas" width="1600" height="900"></canvas>
+    <p id="log"></p>
     <ol id="menu">
         <li>
             <button id="throw" onclick="action(1)">Throw Snowball</button>
