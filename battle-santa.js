@@ -134,6 +134,10 @@ class Combatant {
 	return message;
     }
 
+    animateAction() {
+	
+    }
+
     draw(ctx) {
         this.displayInfo.draw(ctx);
 	this.loadedSnowball.draw(ctx);
@@ -225,7 +229,9 @@ class BattleSantaGame {
     resolveTurn() {
 	this.clearLog();
 	this.log(this.grinch.getLogMessageForAction());
+	this.grinch.animateAction();
 	this.log(this.santa.getLogMessageForAction());
+	this.grinch.animateAction();
 	if (this.grinch.nextAction == Action.Attack && this.grinch.isLoaded) {
 	    if (this.santa.nextAction != Action.Defend) {
 		this.log("You've been hit!");
