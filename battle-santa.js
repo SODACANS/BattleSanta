@@ -53,18 +53,15 @@ class Menu {
 
 /** Basic info needed for displaying objects in the UI. */
 class DisplayInfo {
-    ///** The source image for the object in the UI. */
-    //imgSrc;
-    ///** The x-position the object should be drawn at. */
-    //pos_x;
-    ///** The y-position the object should be drawn at. */
-    //pos_y;
-    //hidden;
 
     constructor(imgSrc, pos_x, pos_y, hidden = false) {
+        /** The source image for the object in the UI. */
         this.imgSrc = imgSrc;
+        /** The x-position the object should be drawn at. */
         this.pos_x = pos_x;
+        /** The y-position the object should be drawn at. */
         this.pos_y = pos_y;
+        /** A toggle to affect whether the image should actually be drawn or not. */
         this.hidden = hidden;
     }
 
@@ -77,15 +74,10 @@ class DisplayInfo {
 /** Base class for the grinch and santa */
 class Combatant {
 
-    ///** The action this combatant wishes to perform on the next turn. */
-    //nextAction = null;
-    ///** Indicates if the combatant has reloaded their attack. */
-    //isLoaded = true;
-    ///** Information necessary to display this combatant in the UI. */
-    //displayInfo;
-
     constructor(displayInfo, loadedSnowball, name) {
+        /** Information necessary to display this combatant in the UI. */
         this.displayInfo = displayInfo;
+        /** The action this combatant wishes to perform on the next turn. */
         this.nextAction = null;
         this.loadedSnowball = loadedSnowball;
         this.name = name;
@@ -215,9 +207,6 @@ class Snowball {
 
 class BattleSantaGame {
 
-    //grinch = new Grinch();
-    //santa = new Santa();
-
     constructor(graphicsContext, grinchImg, santaImg, snowballImg, logRef) {
         this.santa = new Santa(santaImg, snowballImg);
         this.grinch = new Grinch(grinchImg, snowballImg, this.santa);
@@ -298,8 +287,6 @@ function main() {
         }
     });
     battleSantaGame.draw();
-    //ctx.drawImage(santaImage, 0, 300);
-    //ctx.drawImage(grinchImage, 1000, 0);
 }
 
 function action(act) {
