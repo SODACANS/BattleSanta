@@ -87,18 +87,18 @@ class Combatant {
     constructor(displayInfo, loadedSnowball, name) {
         this.displayInfo = displayInfo;
         this.nextAction = null;
-	this.loadedSnowball = loadedSnowball;
-	this.name = name;
+        this.loadedSnowball = loadedSnowball;
+        this.name = name;
     }
 
     get isLoaded() {
-	return !this.loadedSnowball.displayInfo.hidden;
+        return !this.loadedSnowball.displayInfo.hidden;
     }
     load() {
-	this.loadedSnowball.displayInfo.hidden = false;
+        this.loadedSnowball.displayInfo.hidden = false;
     }
     unload() {
-	this.loadedSnowball.displayInfo.hidden = true;
+        this.loadedSnowball.displayInfo.hidden = true;
     }
 
     /** Indicates that the combatant has selected their next move and is ready for the next turn to resolve. */
@@ -107,8 +107,8 @@ class Combatant {
     }
 
     getlegalActions() {
-        return this.isLoaded ? [ Action.Attack, Action.Defend ]
-            : [ Action.Defend, Action.Reload ];
+        return this.isLoaded ? [Action.Attack, Action.Defend]
+            : [Action.Defend, Action.Reload];
     }
 
     isActionLegal(action) {
@@ -120,35 +120,35 @@ class Combatant {
     }
 
     getLogMessageForAction() {
-	let message = null;
-	switch (this.nextAction) {
-	    case Action.Attack:
-		message = this.isLoaded ? `${this.name} chucks a snowball. . .` : `${this.name} looks really silly trying to throw a non-existent snowball. . .`;
-		break;
-	    case Action.Defend:
-		message = `${this.name} ducks out of the way. . .`;
-		break;
-	    case Action.Reload:
-		message = `${this.name} rolls a fresh snowball. . .`;
-	}
-	return message;
+        let message = null;
+        switch (this.nextAction) {
+            case Action.Attack:
+                message = this.isLoaded ? `${this.name} chucks a snowball. . .` : `${this.name} looks really silly trying to throw a non-existent snowball. . .`;
+                break;
+            case Action.Defend:
+                message = `${this.name} ducks out of the way. . .`;
+                break;
+            case Action.Reload:
+                message = `${this.name} rolls a fresh snowball. . .`;
+        }
+        return message;
     }
 
     animateAction() {
-	
+
     }
 
     draw(ctx) {
         this.displayInfo.draw(ctx);
-	this.loadedSnowball.draw(ctx);
+        this.loadedSnowball.draw(ctx);
     }
 }
 
 class Enemy extends Combatant {
-    
+
     constructor(displayInfo, loadedSnowball, name, target) {
-	super(displayInfo, loadedSnowball, name);
-	this.target = target;
+        super(displayInfo, loadedSnowball, name);
+        this.target = target;
     }
 
 }
@@ -157,19 +157,19 @@ class Grinch extends Enemy {
 
     constructor(grinchImg, snowballImg, target) {
         let displayInfo = new DisplayInfo(grinchImg, 1000, 0);
-	let snowballDisplayInfo = new DisplayInfo(snowballImg, 1000, 525);
-	let snowball = new Snowball(snowballDisplayInfo);
+        let snowballDisplayInfo = new DisplayInfo(snowballImg, 1000, 525);
+        let snowball = new Snowball(snowballDisplayInfo);
         super(displayInfo, snowball, "The Grinch", target);
     }
 
     pickMove() {
-	if (!this.target.isLoaded && !this.isLoaded) {
-	    this.nextAction = Action.Reload;
-	    return;
-	}
+        if (!this.target.isLoaded && !this.isLoaded) {
+            this.nextAction = Action.Reload;
+            return;
+        }
         let legalActions = this.getlegalActions();
         let pickIndex = getRandomInt(legalActions.length - 1);
-	this.nextAction = legalActions[pickIndex];
+        this.nextAction = legalActions[pickIndex];
     }
 }
 
@@ -177,28 +177,28 @@ class Santa extends Combatant {
 
     constructor(santaImg, snowballImg) {
         let displayInfo = new DisplayInfo(santaImg, 0, 300);
-	let snowballDisplayInfo = new DisplayInfo(snowballImg, 525, 825);
-	let snowball = new Snowball(snowballDisplayInfo);
+        let snowballDisplayInfo = new DisplayInfo(snowballImg, 525, 825);
+        let snowball = new Snowball(snowballDisplayInfo);
         super(displayInfo, snowball, "Santa");
     }
 
     pickMove(action) {
         this.nextAction = action;
-	this.focusCurrentAction();
+        this.focusCurrentAction();
     }
 
     focusCurrentAction() {
-	switch (this.nextAction) {
-	    case Action.Attack:
-		document.getElementById("throw").focus();
-		break;
-	    case Action.Defend:
-		document.getElementById("dodge").focus();
-		break;
-	    case Action.Reload:
-		document.getElementById("pack").focus();
-		break;
-	}
+        switch (this.nextAction) {
+            case Action.Attack:
+                document.getElementById("throw").focus();
+                break;
+            case Action.Defend:
+                document.getElementById("dodge").focus();
+                break;
+            case Action.Reload:
+                document.getElementById("pack").focus();
+                break;
+        }
     }
 }
 
@@ -209,7 +209,7 @@ class Snowball {
     }
 
     draw(ctx) {
-	this.displayInfo.draw(ctx);
+        this.displayInfo.draw(ctx);
     }
 }
 
@@ -222,65 +222,65 @@ class BattleSantaGame {
         this.santa = new Santa(santaImg, snowballImg);
         this.grinch = new Grinch(grinchImg, snowballImg, this.santa);
         this.ctx = graphicsContext;
-	this.logRef = logRef;
-	this.grinch.pickMove();
+        this.logRef = logRef;
+        this.grinch.pickMove();
     }
 
     resolveTurn() {
-	this.clearLog();
-	this.log(this.grinch.getLogMessageForAction());
-	this.grinch.animateAction();
-	this.log(this.santa.getLogMessageForAction());
-	this.grinch.animateAction();
-	if (this.grinch.nextAction == Action.Attack && this.grinch.isLoaded) {
-	    if (this.santa.nextAction != Action.Defend) {
-		this.log("You've been hit!");
-		alert("You lost");
-		this.reset();
-	    } else {
-		this.grinch.unload();
-	    }
-	}
-	else if (this.santa.nextAction == Action.Attack && this.santa.isLoaded) {
-	    if (this.grinch.nextAction != Action.Defend) {
-		this.log("You nailed the grinch right in the face!");
-		alert("You won!");
-		this.reset();
-	    } else {
-		this.santa.unload();
-	    }
-	}
-	if (this.santa.nextAction == Action.Reload) {
-	    this.santa.load();
-	}
-	if (this.grinch.nextAction == Action.Reload) {
-	    this.grinch.load();
-	}
-	this.santa.nextAction = null;
-	this.grinch.pickMove();
-	this.draw();
+        this.clearLog();
+        this.log(this.grinch.getLogMessageForAction());
+        this.grinch.animateAction();
+        this.log(this.santa.getLogMessageForAction());
+        this.grinch.animateAction();
+        if (this.grinch.nextAction == Action.Attack && this.grinch.isLoaded) {
+            if (this.santa.nextAction != Action.Defend) {
+                this.log("You've been hit!");
+                alert("You lost");
+                this.reset();
+            } else {
+                this.grinch.unload();
+            }
+        }
+        else if (this.santa.nextAction == Action.Attack && this.santa.isLoaded) {
+            if (this.grinch.nextAction != Action.Defend) {
+                this.log("You nailed the grinch right in the face!");
+                alert("You won!");
+                this.reset();
+            } else {
+                this.santa.unload();
+            }
+        }
+        if (this.santa.nextAction == Action.Reload) {
+            this.santa.load();
+        }
+        if (this.grinch.nextAction == Action.Reload) {
+            this.grinch.load();
+        }
+        this.santa.nextAction = null;
+        this.grinch.pickMove();
+        this.draw();
     }
 
     reset() {
-	this.santa.load();
-	this.grinch.load();
-	this.grinch.pickMove();
-	this.draw();
+        this.santa.load();
+        this.grinch.load();
+        this.grinch.pickMove();
+        this.draw();
     }
 
     draw() {
-	this.ctx.clearRect(0,0,1600,900);
+        this.ctx.clearRect(0, 0, 1600, 900);
         this.grinch.draw(this.ctx);
         this.santa.draw(this.ctx);
     }
 
     log(message) {
-	console.log(message);
-	this.logRef.innerHTML += `${message}</br>`;
+        console.log(message);
+        this.logRef.innerHTML += `${message}</br>`;
     }
 
     clearLog() {
-	this.logRef.innerHTML = "";
+        this.logRef.innerHTML = "";
     }
 }
 
@@ -292,10 +292,10 @@ function main() {
     battleSantaGame = new BattleSantaGame(ctx, grinchImage, santaImage, snowballImage, log);
     // Set up event listeners for inputs
     document.addEventListener('keypress', (event) => {
-	const key = event.key;
-	if (['1','2','3'].some(val => val == key)) {
-	    action(+key);
-	}
+        const key = event.key;
+        if (['1', '2', '3'].some(val => val == key)) {
+            action(+key);
+        }
     });
     battleSantaGame.draw();
     //ctx.drawImage(santaImage, 0, 300);
