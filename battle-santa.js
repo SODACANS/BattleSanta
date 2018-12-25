@@ -28,7 +28,7 @@ snowballImage.src = "snowball.png";
 
 /**
  * Helper function for generating a random integer between min and max inclusively
- * @param {number} max Upper boudn for the randomly generated int.
+ * @param {number} max Upper bound for the randomly generated int.
  * @param {number} min Lower bound for the randomly generated int.
  */
 function getRandomInt(max, min = 0) {
@@ -73,11 +73,12 @@ class DisplayInfo {
 
 class Animation {
 
-    constructor(startDisplayInfo, endDisplayInfo, timeLength, flash = false) {
-        this.startDisplayInfo = startDisplayInfo;
-        this.endDisplayInfo = endDisplayInfo;
+    constructor(startDisplayInfos, endDisplayInfos, timeLength, flash = false) {
+        this.startDisplayInfos = startDisplayInfos;
+        this.endDisplayInfos = endDisplayInfos;
         this.timeLength = timeLength;
         this.startTime = null;
+	this.endAnimationPromise = null;
     }
 
     get isAnimating() {
@@ -88,19 +89,30 @@ class Animation {
         this.startTime = new Date();
     }
 
-    getFrameInfo() {
-        if (this.isAnimating) {
-            let x = this.interpolate(this.startDisplayInfo.pos_x, this.endDisplayInfo.pos_x, this.startTime.getTime(), Date.now(), this.timeLength);
-            let y = this.interpolate(this.startDisplayInfo.pos_y, this.endDisplayInfo.pos_y, this.startTime.getTime(), Date.now(), this.timeLength);
-            let frameDisplayInfo = new DisplayInfo(this.startDisplayInfo.imgSrc, x, y);
-            return frameDisplayInfo;
-        } else {
-            return this.startDisplayInfo;
-        }
+    stop() {
+	this.startTime = null;
+    }
+
+    drawFrame(ctx) {
+	for (let i = 0; i < this.startDisplayInfos.length; i++) {
+	    let startDisplayInfo = this.startDisplayInfos[i];
+	    let endDisplayInfo = this.endDisplayInfos[i];
+            if (this.isAnimating) {
+		let now = Date.now();
+            	let x = this.interpolate(startDisplayInfo.pos_x, endDisplayInfo.pos_x, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
+            	let y = this.interpolate(startDisplayInfo.pos_y, endDisplayInfo.pos_y, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
+            	let frameDisplayInfo = new DisplayInfo(startDisplayInfo.imgSrc, x, y);
+            	frameDisplayInfo.draw(ctx);
+            } else {
+            	startDisplayInfo.draw(ctx);
+            }
+	}
     }
 
     interpolate(start, stop, t_0, t, t_final) {
         let s = (t - t_0) / (t_final - t_0);
+	// Clamp s between 0 and 1.
+	s = Math.max(0, Math.min(1, s));
         return start + s * (stop - start);
     }
 }
@@ -108,13 +120,15 @@ class Animation {
 /** Base class for the grinch and santa */
 class Combatant {
 
-    constructor(displayInfo, loadedSnowball, name) {
+    constructor(displayInfo, loadedSnowball, name, attackAnimation, defendAnimation) {
         /** Information necessary to display this combatant in the UI. */
         this.displayInfo = displayInfo;
         /** The action this combatant wishes to perform on the next turn. */
         this.nextAction = null;
         this.loadedSnowball = loadedSnowball;
         this.name = name;
+	this.attackAnimation = attackAnimation;
+	this.defendAnimation = defendAnimation;
     }
 
     get isLoaded() {
@@ -161,19 +175,28 @@ class Combatant {
     }
 
     animateAction() {
+	if (this.currentActionAnimation) this.currentActionAnimation.start();
+    }
 
+    get currentActionAnimation() {
+	if (this.nextAction == Action.Attack) {
+	    return this.attackAnimation;
+	} else if (this.nextAction == Action.Defend) {
+	    return this.defendAnimation;
+	}
+	return null;
     }
 
     draw(ctx) {
-        this.displayInfo.draw(ctx);
+	this.currentActionAnimation ? this.currentActionAnimation.drawFrame(ctx) : this.displayInfo.draw(ctx);
         this.loadedSnowball.draw(ctx);
     }
 }
 
 class Enemy extends Combatant {
 
-    constructor(displayInfo, loadedSnowball, name, target) {
-        super(displayInfo, loadedSnowball, name);
+    constructor(displayInfo, loadedSnowball, name, target, attackAnimation, defendAnimation) {
+        super(displayInfo, loadedSnowball, name, attackAnimation, defendAnimation);
         this.target = target;
     }
 
@@ -182,10 +205,24 @@ class Enemy extends Combatant {
 class Grinch extends Enemy {
 
     constructor(grinchImg, snowballImg, target) {
+	// Set up resting display info.
         let displayInfo = new DisplayInfo(grinchImg, 1000, 0);
+
+	// Set up reloaded snowball ui indicator.
         let snowballDisplayInfo = new DisplayInfo(snowballImg, 1000, 525);
         let snowball = new Snowball(snowballDisplayInfo);
-        super(displayInfo, snowball, "The Grinch", target);
+
+	// Set up the attack animation.
+	let attackEndDI = new DisplayInfo(grinchImg, 900, 0);
+	let attackSnowballStartDI = new DisplayInfo(snowballImg, 800, 300);
+	let attackSnowballEndDI = new DisplayInfo(snowballImg, 600, 400); 
+	let attackAnimation = new Animation([displayInfo, attackSnowballStartDI], [attackEndDI, attackSnowballEndDI], 1000);
+
+	// Set up the defend animation.
+	let defendEndDI = new DisplayInfo(grinchImg, 1600, 0);
+	let defendAnimation = new Animation([displayInfo], [defendEndDI], 500);
+
+        super(displayInfo, snowball, "The Grinch", target, attackAnimation, defendAnimation);
     }
 
     pickMove() {
@@ -202,10 +239,24 @@ class Grinch extends Enemy {
 class Santa extends Combatant {
 
     constructor(santaImg, snowballImg) {
+	// Set up resting display info.
         let displayInfo = new DisplayInfo(santaImg, 0, 300);
+
+	// Set up reloaded snowball ui indicator.
         let snowballDisplayInfo = new DisplayInfo(snowballImg, 525, 825);
         let snowball = new Snowball(snowballDisplayInfo);
-        super(displayInfo, snowball, "Santa");
+
+	// Set up the attack animation.
+	let attackEndDI = new DisplayInfo(santaImg, 100, 300);
+	let attackSnowballStartDI = new DisplayInfo(snowballImg, 550, 600);
+	let attackSnowballEndDI = new DisplayInfo(snowballImg, 750, 500);
+	let attackAnimation = new Animation([displayInfo, attackSnowballStartDI], [attackEndDI, attackSnowballEndDI], 1000);
+
+	// Set up the defend animation
+	let defendEndDI = new DisplayInfo(santaImg, -600, 300);
+	let defendAnimation = new Animation([displayInfo], [defendEndDI], 500);
+
+        super(displayInfo, snowball, "Santa", attackAnimation, defendAnimation);
     }
 
     pickMove(action) {
@@ -251,10 +302,11 @@ class BattleSantaGame {
 
     resolveTurn() {
         this.clearLog();
+	this.grinch.pickMove();
         this.log(this.grinch.getLogMessageForAction());
         this.grinch.animateAction();
         this.log(this.santa.getLogMessageForAction());
-        this.grinch.animateAction();
+        this.santa.animateAction();
         if (this.grinch.nextAction == Action.Attack && this.grinch.isLoaded) {
             if (this.santa.nextAction != Action.Defend) {
                 this.log("You've been hit!");
@@ -279,15 +331,14 @@ class BattleSantaGame {
         if (this.grinch.nextAction == Action.Reload) {
             this.grinch.load();
         }
-        this.santa.nextAction = null;
-        this.grinch.pickMove();
+        //this.santa.nextAction = null;
+        
     }
 
     reset() {
         this.santa.load();
         this.grinch.load();
         this.grinch.pickMove();
-        this.draw();
     }
 
     draw() {
