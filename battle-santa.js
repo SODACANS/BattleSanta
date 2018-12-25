@@ -71,6 +71,40 @@ class DisplayInfo {
     }
 }
 
+class Animation {
+
+    constructor(startDisplayInfo, endDisplayInfo, timeLength, flash = false) {
+        this.startDisplayInfo = startDisplayInfo;
+        this.endDisplayInfo = endDisplayInfo;
+        this.timeLength = timeLength;
+        this.startTime = null;
+    }
+
+    get isAnimating() {
+        return this.startTime != null;
+    }
+
+    start() {
+        this.startTime = new Date();
+    }
+
+    getFrameInfo() {
+        if (this.isAnimating) {
+            let x = this.interpolate(this.startDisplayInfo.pos_x, this.endDisplayInfo.pos_x, this.startTime.getTime(), Date.now(), this.timeLength);
+            let y = this.interpolate(this.startDisplayInfo.pos_y, this.endDisplayInfo.pos_y, this.startTime.getTime(), Date.now(), this.timeLength);
+            let frameDisplayInfo = new DisplayInfo(this.startDisplayInfo.imgSrc, x, y);
+            return frameDisplayInfo;
+        } else {
+            return this.startDisplayInfo;
+        }
+    }
+
+    interpolate(start, stop, t_0, t, t_final) {
+        let s = (t - t_0) / (t_final - t_0);
+        return start + s * (stop - start);
+    }
+}
+
 /** Base class for the grinch and santa */
 class Combatant {
 
@@ -247,7 +281,6 @@ class BattleSantaGame {
         }
         this.santa.nextAction = null;
         this.grinch.pickMove();
-        this.draw();
     }
 
     reset() {
@@ -261,6 +294,7 @@ class BattleSantaGame {
         this.ctx.clearRect(0, 0, 1600, 900);
         this.grinch.draw(this.ctx);
         this.santa.draw(this.ctx);
+        window.requestAnimationFrame(() => this.draw());
     }
 
     log(message) {
@@ -286,7 +320,7 @@ function main() {
             action(+key);
         }
     });
-    battleSantaGame.draw();
+    window.requestAnimationFrame(() => battleSantaGame.draw());
 }
 
 function action(act) {
