@@ -81,12 +81,24 @@ class Animation {
 	this.endAnimationPromise = null;
     }
 
-    get isAnimating() {
+    get isStarted() {
         return this.startTime != null;
+    }
+
+    get isComplete() {
+	return this.isStarted && this.startTime.getTime() + this.timeLength < Date.now();
     }
 
     start() {
         this.startTime = new Date();
+	let resolver = (resolve) => {
+	    if (this.isComplete) {
+		resolve(true);	
+	    } else {
+		setTimeout(() => resolver(resolve), 100);
+	    }
+	};
+	return new Promise(resolver);
     }
 
     stop() {
@@ -97,11 +109,11 @@ class Animation {
 	for (let i = 0; i < this.startDisplayInfos.length; i++) {
 	    let startDisplayInfo = this.startDisplayInfos[i];
 	    let endDisplayInfo = this.endDisplayInfos[i];
-            if (this.isAnimating) {
+            if (this.isStarted) {
 		let now = Date.now();
             	let x = this.interpolate(startDisplayInfo.pos_x, endDisplayInfo.pos_x, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
             	let y = this.interpolate(startDisplayInfo.pos_y, endDisplayInfo.pos_y, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
-            	let frameDisplayInfo = new DisplayInfo(startDisplayInfo.imgSrc, x, y);
+            	let frameDisplayInfo = new DisplayInfo(startDisplayInfo.imgSrc, x, y, startDisplayInfo.hidden);
             	frameDisplayInfo.draw(ctx);
             } else {
             	startDisplayInfo.draw(ctx);
@@ -126,19 +138,26 @@ class Combatant {
         /** The action this combatant wishes to perform on the next turn. */
         this.nextAction = null;
         this.loadedSnowball = loadedSnowball;
+	this._isLoaded = true;
         this.name = name;
 	this.attackAnimation = attackAnimation;
 	this.defendAnimation = defendAnimation;
     }
 
     get isLoaded() {
-        return !this.loadedSnowball.displayInfo.hidden;
+        return this._isLoaded;
     }
     load() {
         this.loadedSnowball.displayInfo.hidden = false;
+	this.attackAnimation.startDisplayInfos[1].hidden = false;
+	this.attackAnimation.endDisplayInfos[1].hidden = false;
+	this.isLoaded = true;
     }
     unload() {
         this.loadedSnowball.displayInfo.hidden = true;
+	this.attackAnimation.startDisplayInfos[1].hidden = true;
+	this.attackAnimation.endDisplayInfos[1].hidden = true;
+	this._isLoaded = false;
     }
 
     /** Indicates that the combatant has selected their next move and is ready for the next turn to resolve. */
@@ -175,7 +194,7 @@ class Combatant {
     }
 
     animateAction() {
-	if (this.currentActionAnimation) this.currentActionAnimation.start();
+	if (this.currentActionAnimation) return this.currentActionAnimation.start();
     }
 
     get currentActionAnimation() {
@@ -188,7 +207,7 @@ class Combatant {
     }
 
     draw(ctx) {
-	this.currentActionAnimation ? this.currentActionAnimation.drawFrame(ctx) : this.displayInfo.draw(ctx);
+	this.currentActionAnimation && this.currentActionAnimation.isStarted ? this.currentActionAnimation.drawFrame(ctx) : this.displayInfo.draw(ctx);
         this.loadedSnowball.draw(ctx);
     }
 }
@@ -300,13 +319,13 @@ class BattleSantaGame {
         this.grinch.pickMove();
     }
 
-    resolveTurn() {
+    async resolveTurn() {
         this.clearLog();
-	this.grinch.pickMove();
+
+	// Handle Grinch action.
         this.log(this.grinch.getLogMessageForAction());
-        this.grinch.animateAction();
-        this.log(this.santa.getLogMessageForAction());
-        this.santa.animateAction();
+	if (this.grinch.nextAction == Action.Attack) this.grinch.loadedSnowball.hidden = true;
+        await this.grinch.animateAction();
         if (this.grinch.nextAction == Action.Attack && this.grinch.isLoaded) {
             if (this.santa.nextAction != Action.Defend) {
                 this.log("You've been hit!");
@@ -316,28 +335,40 @@ class BattleSantaGame {
                 this.grinch.unload();
             }
         }
-        else if (this.santa.nextAction == Action.Attack && this.santa.isLoaded) {
-            if (this.grinch.nextAction != Action.Defend) {
-                this.log("You nailed the grinch right in the face!");
-                alert("You won!");
-                this.reset();
-            } else {
-                this.santa.unload();
-            }
+        if (this.grinch.nextAction == Action.Reload) {
+            this.grinch.load();
+        }
+
+	// Handle Santa action.
+        this.log(this.santa.getLogMessageForAction());
+	if (this.santa.nextAction == Action.Attack) this.santa.loadedSnowball.hidden = true;
+        await this.santa.animateAction();
+        if (this.santa.nextAction == Action.Attack && this.santa.isLoaded) {
+	    if (this.grinch.nextAction != Action.Defend) {
+            	this.log("You nailed the grinch right in the face!");
+            	alert("You won!");
+            	this.reset();
+	    } else {
+		this.santa.unload();
+	    }
         }
         if (this.santa.nextAction == Action.Reload) {
             this.santa.load();
         }
-        if (this.grinch.nextAction == Action.Reload) {
-            this.grinch.load();
-        }
-        //this.santa.nextAction = null;
-        
+
+	// Reset animation state.
+	this.santa.currentActionAnimation.stop();
+	this.grinch.currentActionAnimation.stop();
+
+	// Prep moves for next turn.
+        this.santa.nextAction = null;
+	this.grinch.pickMove();
     }
 
     reset() {
         this.santa.load();
         this.grinch.load();
+	this.clearLog();
         this.grinch.pickMove();
     }
 
