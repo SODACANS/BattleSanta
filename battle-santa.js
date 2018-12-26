@@ -78,7 +78,7 @@ class Animation {
         this.endDisplayInfos = endDisplayInfos;
         this.timeLength = timeLength;
         this.startTime = null;
-	this.endAnimationPromise = null;
+        this.endAnimationPromise = null;
     }
 
     get isStarted() {
@@ -86,45 +86,45 @@ class Animation {
     }
 
     get isComplete() {
-	return this.isStarted && this.startTime.getTime() + this.timeLength < Date.now();
+        return this.isStarted && this.startTime.getTime() + this.timeLength < Date.now();
     }
 
     start() {
         this.startTime = new Date();
-	let resolver = (resolve) => {
-	    if (this.isComplete) {
-		resolve(true);	
-	    } else {
-		setTimeout(() => resolver(resolve), 100);
-	    }
-	};
-	return new Promise(resolver);
+        let resolver = (resolve) => {
+            if (this.isComplete) {
+                resolve(true);
+            } else {
+                setTimeout(() => resolver(resolve), 100);
+            }
+        };
+        return new Promise(resolver);
     }
 
     stop() {
-	this.startTime = null;
+        this.startTime = null;
     }
 
     drawFrame(ctx) {
-	for (let i = 0; i < this.startDisplayInfos.length; i++) {
-	    let startDisplayInfo = this.startDisplayInfos[i];
-	    let endDisplayInfo = this.endDisplayInfos[i];
+        for (let i = 0; i < this.startDisplayInfos.length; i++) {
+            let startDisplayInfo = this.startDisplayInfos[i];
+            let endDisplayInfo = this.endDisplayInfos[i];
             if (this.isStarted) {
-		let now = Date.now();
-            	let x = this.interpolate(startDisplayInfo.pos_x, endDisplayInfo.pos_x, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
-            	let y = this.interpolate(startDisplayInfo.pos_y, endDisplayInfo.pos_y, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
-            	let frameDisplayInfo = new DisplayInfo(startDisplayInfo.imgSrc, x, y, startDisplayInfo.hidden);
-            	frameDisplayInfo.draw(ctx);
+                let now = Date.now();
+                let x = this.interpolate(startDisplayInfo.pos_x, endDisplayInfo.pos_x, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
+                let y = this.interpolate(startDisplayInfo.pos_y, endDisplayInfo.pos_y, this.startTime.getTime(), Date.now(), this.startTime.getTime() + this.timeLength);
+                let frameDisplayInfo = new DisplayInfo(startDisplayInfo.imgSrc, x, y, startDisplayInfo.hidden);
+                frameDisplayInfo.draw(ctx);
             } else {
-            	startDisplayInfo.draw(ctx);
+                startDisplayInfo.draw(ctx);
             }
-	}
+        }
     }
 
     interpolate(start, stop, t_0, t, t_final) {
         let s = (t - t_0) / (t_final - t_0);
-	// Clamp s between 0 and 1.
-	s = Math.max(0, Math.min(1, s));
+        // Clamp s between 0 and 1.
+        s = Math.max(0, Math.min(1, s));
         return start + s * (stop - start);
     }
 }
@@ -138,10 +138,10 @@ class Combatant {
         /** The action this combatant wishes to perform on the next turn. */
         this.nextAction = null;
         this.loadedSnowball = loadedSnowball;
-	this._isLoaded = true;
+        this._isLoaded = true;
         this.name = name;
-	this.attackAnimation = attackAnimation;
-	this.defendAnimation = defendAnimation;
+        this.attackAnimation = attackAnimation;
+        this.defendAnimation = defendAnimation;
     }
 
     get isLoaded() {
@@ -149,15 +149,15 @@ class Combatant {
     }
     load() {
         this.loadedSnowball.displayInfo.hidden = false;
-	this.attackAnimation.startDisplayInfos[1].hidden = false;
-	this.attackAnimation.endDisplayInfos[1].hidden = false;
-	this.isLoaded = true;
+        this.attackAnimation.startDisplayInfos[1].hidden = false;
+        this.attackAnimation.endDisplayInfos[1].hidden = false;
+        this._isLoaded = true;
     }
     unload() {
         this.loadedSnowball.displayInfo.hidden = true;
-	this.attackAnimation.startDisplayInfos[1].hidden = true;
-	this.attackAnimation.endDisplayInfos[1].hidden = true;
-	this._isLoaded = false;
+        this.attackAnimation.startDisplayInfos[1].hidden = true;
+        this.attackAnimation.endDisplayInfos[1].hidden = true;
+        this._isLoaded = false;
     }
 
     /** Indicates that the combatant has selected their next move and is ready for the next turn to resolve. */
@@ -194,20 +194,20 @@ class Combatant {
     }
 
     animateAction() {
-	if (this.currentActionAnimation) return this.currentActionAnimation.start();
+        if (this.currentActionAnimation) return this.currentActionAnimation.start();
     }
 
     get currentActionAnimation() {
-	if (this.nextAction == Action.Attack) {
-	    return this.attackAnimation;
-	} else if (this.nextAction == Action.Defend) {
-	    return this.defendAnimation;
-	}
-	return null;
+        if (this.nextAction == Action.Attack) {
+            return this.attackAnimation;
+        } else if (this.nextAction == Action.Defend) {
+            return this.defendAnimation;
+        }
+        return null;
     }
 
     draw(ctx) {
-	this.currentActionAnimation && this.currentActionAnimation.isStarted ? this.currentActionAnimation.drawFrame(ctx) : this.displayInfo.draw(ctx);
+        this.currentActionAnimation && this.currentActionAnimation.isStarted ? this.currentActionAnimation.drawFrame(ctx) : this.displayInfo.draw(ctx);
         this.loadedSnowball.draw(ctx);
     }
 }
@@ -224,22 +224,22 @@ class Enemy extends Combatant {
 class Grinch extends Enemy {
 
     constructor(grinchImg, snowballImg, target) {
-	// Set up resting display info.
+        // Set up resting display info.
         let displayInfo = new DisplayInfo(grinchImg, 1000, 0);
 
-	// Set up reloaded snowball ui indicator.
+        // Set up reloaded snowball ui indicator.
         let snowballDisplayInfo = new DisplayInfo(snowballImg, 1000, 525);
         let snowball = new Snowball(snowballDisplayInfo);
 
-	// Set up the attack animation.
-	let attackEndDI = new DisplayInfo(grinchImg, 900, 0);
-	let attackSnowballStartDI = new DisplayInfo(snowballImg, 800, 300);
-	let attackSnowballEndDI = new DisplayInfo(snowballImg, 600, 400); 
-	let attackAnimation = new Animation([displayInfo, attackSnowballStartDI], [attackEndDI, attackSnowballEndDI], 1000);
+        // Set up the attack animation.
+        let attackEndDI = new DisplayInfo(grinchImg, 900, 0);
+        let attackSnowballStartDI = new DisplayInfo(snowballImg, 800, 300);
+        let attackSnowballEndDI = new DisplayInfo(snowballImg, 600, 400);
+        let attackAnimation = new Animation([displayInfo, attackSnowballStartDI], [attackEndDI, attackSnowballEndDI], 1000);
 
-	// Set up the defend animation.
-	let defendEndDI = new DisplayInfo(grinchImg, 1600, 0);
-	let defendAnimation = new Animation([displayInfo], [defendEndDI], 500);
+        // Set up the defend animation.
+        let defendEndDI = new DisplayInfo(grinchImg, 1600, 0);
+        let defendAnimation = new Animation([displayInfo], [defendEndDI], 500);
 
         super(displayInfo, snowball, "The Grinch", target, attackAnimation, defendAnimation);
     }
@@ -258,22 +258,22 @@ class Grinch extends Enemy {
 class Santa extends Combatant {
 
     constructor(santaImg, snowballImg) {
-	// Set up resting display info.
+        // Set up resting display info.
         let displayInfo = new DisplayInfo(santaImg, 0, 300);
 
-	// Set up reloaded snowball ui indicator.
+        // Set up reloaded snowball ui indicator.
         let snowballDisplayInfo = new DisplayInfo(snowballImg, 525, 825);
         let snowball = new Snowball(snowballDisplayInfo);
 
-	// Set up the attack animation.
-	let attackEndDI = new DisplayInfo(santaImg, 100, 300);
-	let attackSnowballStartDI = new DisplayInfo(snowballImg, 550, 600);
-	let attackSnowballEndDI = new DisplayInfo(snowballImg, 750, 500);
-	let attackAnimation = new Animation([displayInfo, attackSnowballStartDI], [attackEndDI, attackSnowballEndDI], 1000);
+        // Set up the attack animation.
+        let attackEndDI = new DisplayInfo(santaImg, 100, 300);
+        let attackSnowballStartDI = new DisplayInfo(snowballImg, 550, 600);
+        let attackSnowballEndDI = new DisplayInfo(snowballImg, 750, 500);
+        let attackAnimation = new Animation([displayInfo, attackSnowballStartDI], [attackEndDI, attackSnowballEndDI], 1000);
 
-	// Set up the defend animation
-	let defendEndDI = new DisplayInfo(santaImg, -600, 300);
-	let defendAnimation = new Animation([displayInfo], [defendEndDI], 500);
+        // Set up the defend animation
+        let defendEndDI = new DisplayInfo(santaImg, -600, 300);
+        let defendAnimation = new Animation([displayInfo], [defendEndDI], 500);
 
         super(displayInfo, snowball, "Santa", attackAnimation, defendAnimation);
     }
@@ -322,15 +322,18 @@ class BattleSantaGame {
     async resolveTurn() {
         this.clearLog();
 
-	// Handle Grinch action.
+        // Handle Grinch action.
         this.log(this.grinch.getLogMessageForAction());
-	if (this.grinch.nextAction == Action.Attack) this.grinch.loadedSnowball.hidden = true;
+        if (this.grinch.nextAction == Action.Attack) this.grinch.loadedSnowball.displayInfo.hidden = true;
         await this.grinch.animateAction();
         if (this.grinch.nextAction == Action.Attack && this.grinch.isLoaded) {
             if (this.santa.nextAction != Action.Defend) {
                 this.log("You've been hit!");
-                alert("You lost");
-                this.reset();
+                setTimeout(() => {
+                    alert("You lost");
+                    this.reset();
+                }, 500);
+                return;
             } else {
                 this.grinch.unload();
             }
@@ -339,36 +342,46 @@ class BattleSantaGame {
             this.grinch.load();
         }
 
-	// Handle Santa action.
+        // Handle Santa action.
         this.log(this.santa.getLogMessageForAction());
-	if (this.santa.nextAction == Action.Attack) this.santa.loadedSnowball.hidden = true;
+        if (this.santa.nextAction == Action.Attack) this.santa.loadedSnowball.displayInfo.hidden = true;
         await this.santa.animateAction();
         if (this.santa.nextAction == Action.Attack && this.santa.isLoaded) {
-	    if (this.grinch.nextAction != Action.Defend) {
-            	this.log("You nailed the grinch right in the face!");
-            	alert("You won!");
-            	this.reset();
-	    } else {
-		this.santa.unload();
-	    }
+            if (this.grinch.nextAction != Action.Defend) {
+                this.log("You nailed the grinch right in the face!");
+                setTimeout(() => {
+                    alert("You won!");
+                    this.reset();
+                }, 500);
+                return;
+            } else {
+                this.santa.unload();
+            }
         }
         if (this.santa.nextAction == Action.Reload) {
             this.santa.load();
         }
 
-	// Reset animation state.
-	this.santa.currentActionAnimation.stop();
-	this.grinch.currentActionAnimation.stop();
+        // Reset animation state.
+        if (this.santa.currentActionAnimation) this.santa.currentActionAnimation.stop();
+        if (this.grinch.currentActionAnimation) this.grinch.currentActionAnimation.stop();
 
-	// Prep moves for next turn.
+        // Prep moves for next turn.
         this.santa.nextAction = null;
-	this.grinch.pickMove();
+        this.grinch.pickMove();
     }
 
     reset() {
+        // Reset animation state.
+        if (this.santa.currentActionAnimation) this.santa.currentActionAnimation.stop();
+        if (this.grinch.currentActionAnimation) this.grinch.currentActionAnimation.stop();
+
+        // Load both combatants.
         this.santa.load();
         this.grinch.load();
-	this.clearLog();
+
+        this.clearLog();
+        this.santa.nextAction = null;
         this.grinch.pickMove();
     }
 
